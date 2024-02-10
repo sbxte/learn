@@ -185,11 +185,9 @@ struct Person<'a> {
     phone: Vec<PhoneNumber<'a>>,
 }
 
-
 //
 // Exercise: Implement ProtoMessage for Person and PhoneNumber.
 //
-
 
 impl<'a> ProtoMessage<'a> for Person<'a> {
     fn add_field(&mut self, field: Field<'a>) -> Result<(), Error> {
@@ -198,7 +196,7 @@ impl<'a> ProtoMessage<'a> for Person<'a> {
             Varint(_) => {
                 self.id = field.value.as_u64()?;
                 Ok(())
-            },
+            }
             Len(_) => {
                 println!("person len called: {}", &self.name);
 
@@ -215,7 +213,7 @@ impl<'a> ProtoMessage<'a> for Person<'a> {
                 self.phone.push(phone_number);
 
                 Ok(())
-            },
+            }
             _ => Err(Error::InvalidField),
         }
     }
@@ -236,11 +234,14 @@ impl<'a> ProtoMessage<'a> for PhoneNumber<'a> {
 
                 self.type_ = value;
                 Ok(())
-            },
-            _ => Err(Error::InvalidField)
+            }
+            _ => Err(Error::InvalidField),
         }
     }
 }
+
+// Personal remarks
+// This is just nom with extra steps lol
 
 fn main() {
     let person: Person = parse_message(&[
