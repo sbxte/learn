@@ -39,9 +39,25 @@ impl PellGenerator {
     }
 }
 
+fn pell_fib(n: u32) -> u128 {
+    if n < 2 {
+        return n as u128;
+    }
+    let mut a = 0;
+    let mut b = 1;
+    let mut c = 0;
+    for _ in 0..(n - 1) {
+        c = 2 * b + a;
+        a = b;
+        b = c;
+    }
+    c
+}
+
 fn main() {
     let mut gen = PellGenerator::new();
     for i in 0..10 {
         println!("Pell {}", gen.get(i));
+        println!("Pell {}", pell_fib(i));
     }
 }
