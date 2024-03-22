@@ -1,7 +1,6 @@
 use std::ops;
 
-#[derive(Debug)]
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct Complex {
     real: f64,
     imaginary: f64,
@@ -11,12 +10,27 @@ impl Complex {
         Complex { real, imaginary }
     }
 
-    pub fn magnitude(&self) -> f64 {
+    /// Returns the vector magnitude
+    /// z = a + bi
+    /// `z.mag() == (a^2 + b^2).sqrt()`
+    pub fn mag(&self) -> f64 {
         (self.real * self.real + self.imaginary * self.imaginary).sqrt()
+    }
+
+    /// Returns the square of the vector magnitude
+    pub fn magsq(&self) -> f64 {
+        self.real * self.real + self.imaginary * self.imaginary
     }
 
     pub fn is_zero(&self) -> bool {
         self.real == 0.0 && self.imaginary == 0.0
+    }
+
+    pub fn conjugate(&self) -> Self {
+        Self {
+            real: self.real,
+            imaginary: -self.imaginary,
+        }
     }
 }
 impl ::std::fmt::Display for Complex {
@@ -90,11 +104,10 @@ impl ops::Div<Complex> for Complex {
         let d = rhs.real * rhs.real + rhs.imaginary * rhs.imaginary;
 
         let real = self.real * rhs.real + self.imaginary * rhs.imaginary;
-        let imaginary = - self.real * rhs.imaginary + rhs.real * self.imaginary;
+        let imaginary = -self.real * rhs.imaginary + rhs.real * self.imaginary;
 
         result.real = real / d;
         result.imaginary = imaginary / d;
         result
     }
 }
-

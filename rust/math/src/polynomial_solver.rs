@@ -1,16 +1,17 @@
+use crate::complex::Complex;
 
-use crate::math::complex::Complex;
-
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ErrorType {
     NoSolutions,
     FalseDiscriminant,
-    WtfHappened
+    WtfHappened,
 }
 
 pub fn solve_linear(a: Complex, b: Complex) -> Result<Complex, ErrorType> {
-    if a.is_zero() { return Err(ErrorType::NoSolutions); }
-    Ok(-b/a)
+    if a.is_zero() {
+        return Err(ErrorType::NoSolutions);
+    }
+    Ok(-b / a)
 }
 
 pub fn solve_quadratic(a: f64, b: f64, c: f64) -> Result<(Complex, Complex), ErrorType> {
@@ -18,11 +19,11 @@ pub fn solve_quadratic(a: f64, b: f64, c: f64) -> Result<(Complex, Complex), Err
         return match solve_linear(Complex::new(b, 0.0), Complex::new(c, 0.0)) {
             Err(e) => Err(e),
             Ok(s) => Ok((s, s)),
-        }
+        };
     }
 
-    let k = -b/(a * 2.0);
-    let d = k*k - c/a;
+    let k = -b / (a * 2.0);
+    let d = k * k - c / a;
     if d < 0.0 {
         let f = (-d).sqrt();
         let i = f / (a * 2.0);
@@ -73,14 +74,26 @@ pub fn solve_quadratic(a: f64, b: f64, c: f64) -> Result<(Complex, Complex), Err
 
 pub fn run_examples() {
     // Linear
-    println!("Solution of 4x + 1 = 0 is {}!", solve_linear(Complex::new(4.0, 0.0), Complex::new(1.0, 0.0)).unwrap());
-    println!("Solution of 5x - 10 = 0 is {}!", solve_linear(Complex::new(5.0, 0.0), Complex::new(-10.0, 0.0)).unwrap());
+    println!(
+        "Solution of 4x + 1 = 0 is {}!",
+        solve_linear(Complex::new(4.0, 0.0), Complex::new(1.0, 0.0)).unwrap()
+    );
+    println!(
+        "Solution of 5x - 10 = 0 is {}!",
+        solve_linear(Complex::new(5.0, 0.0), Complex::new(-10.0, 0.0)).unwrap()
+    );
     match solve_linear(Complex::new(0.0, 0.0), Complex::new(3.0, 0.0)) {
         Ok(s) => println!("Solution of 0x - 3 = 0 is {}!", s),
-        Err(e) => println!("Solution of 0x - 3 = 0 is {:?}!", e)
+        Err(e) => println!("Solution of 0x - 3 = 0 is {:?}!", e),
     }
 
     // Quadratic
-    println!("Solution of x^2 - 2x -3 = 0 is {:?}!", solve_quadratic(1.0, -2.0, -3.0).unwrap());
-    println!("Solution of x^2 - 4x + 3 = 0 is {:?}!", solve_quadratic(1.0, -4.0, 3.0).unwrap());
+    println!(
+        "Solution of x^2 - 2x -3 = 0 is {:?}!",
+        solve_quadratic(1.0, -2.0, -3.0).unwrap()
+    );
+    println!(
+        "Solution of x^2 - 4x + 3 = 0 is {:?}!",
+        solve_quadratic(1.0, -4.0, 3.0).unwrap()
+    );
 }
