@@ -39,6 +39,12 @@ impl PellGenerator {
     }
 }
 
+// Realistically we should not have to create a new generator every time
+fn pell_generator(n: u32) -> u128 {
+    let mut gen = PellGenerator::new();
+    gen.get(n)
+}
+
 fn pell_fib(n: u32) -> u128 {
     if n < 2 {
         return n as u128;
@@ -54,10 +60,16 @@ fn pell_fib(n: u32) -> u128 {
     c
 }
 
-fn main() {
-    let mut gen = PellGenerator::new();
-    for i in 0..10 {
-        println!("Pell {}", gen.get(i));
-        println!("Pell {}", pell_fib(i));
+macro_rules! run_pell {
+    ($($x:tt),+) => {
+        $(
+            for i in 0..10 {
+                println!("{}", $x(i));
+            }
+        );+
     }
+}
+
+fn main() {
+    run_pell!(pell_mut_static, pell_recurse, pell_generator, pell_fib);
 }
