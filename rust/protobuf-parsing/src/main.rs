@@ -1,4 +1,3 @@
-use std::convert::TryFrom;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -40,12 +39,14 @@ enum FieldValue<'a> {
     Varint(u64),
     //I64(i64),  -- not needed for this exercise
     Len(&'a [u8]),
+    #[allow(dead_code)]
     I32(i32),
 }
 
 #[derive(Debug)]
 /// A field, containing the field number and its value.
 struct Field<'a> {
+    #[allow(dead_code)]
     field_num: u64,
     value: FieldValue<'a>,
 }
