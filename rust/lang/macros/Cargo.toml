@@ -1,0 +1,8 @@
+[package]
+name = "procmacros"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+procmacro = { path = "./procmacro/" }
+procmacro_derive = { path = "./procmacro_derive/" }
