@@ -55,6 +55,16 @@ fn main() {
     make_noise_dynamic(boxed_cat);
     make_noise_dynamic(boxed_dog);
 
+    println!("Dynamic dispatch with arrays");
+    let audibles: Vec<Box<dyn Sound>> = vec![
+        Box::new(Cat::default()),
+        Box::new(Dog::default()),
+        Box::new(Cat::default()),
+    ];
+    for audible in audibles {
+        (*audible).play();
+    }
+
     println!("Multi trait dynamic dispatch");
     let boxed_cat: Box<Cat> = Default::default();
     eat_and_sound(&*boxed_cat); // "&*" lookin funky. This actually dereferences and then borrows
