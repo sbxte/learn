@@ -4,31 +4,34 @@ use std::ops;
 pub struct Matrix2D {
     columns: usize,
     rows: usize,
-    data: Vec<f32>
+    data: Vec<f32>,
 }
 impl Matrix2D {
     pub fn new_empty(columns: usize, rows: usize) -> Self {
         Matrix2D {
-            columns, rows,
+            columns,
+            rows,
             data: Vec::with_capacity(columns * rows),
         }
     }
     pub fn new_zero(columns: usize, rows: usize) -> Self {
         let mut mat = Matrix2D {
-            columns, rows,
+            columns,
+            rows,
             data: Vec::with_capacity(columns * rows),
         };
-        for _ in 0..(columns*rows) {
+        for _ in 0..(columns * rows) {
             mat.data.push(0.0);
         }
         mat
     }
     pub fn new_with_value(columns: usize, rows: usize, value: f32) -> Self {
         let mut mat = Matrix2D {
-            columns, rows,
+            columns,
+            rows,
             data: Vec::with_capacity(columns * rows),
         };
-        for _ in 0..(columns*rows) {
+        for _ in 0..(columns * rows) {
             mat.data.push(value);
         }
         mat
@@ -38,8 +41,9 @@ impl Matrix2D {
     }
     pub fn from_vec(columns: usize, rows: usize, vec: Vec<f32>) -> Self {
         Matrix2D {
-            columns, rows,
-            data: vec
+            columns,
+            rows,
+            data: vec,
         }
     }
 }
@@ -51,10 +55,8 @@ impl ops::Add<Self> for Matrix2D {
             panic!("Matrix2D add failed. Cannot add 2 matrices of different sizes.");
         }
         let mut copy = self.to_owned();
-        let mut i = 0;
-        for elem in copy.data.iter_mut() {
+        for (i, elem) in copy.data.iter_mut().enumerate() {
             *elem += *rhs.data.get(i).unwrap();
-            i += 1;
         }
         copy
     }
@@ -122,9 +124,8 @@ impl ops::Mul<Self> for Matrix2D {
                 let mut sum = 0f32;
                 for col1 in 0..self.columns {
                     let row2 = col1;
-                    sum +=
-                        self.data.get(rows1 * self.columns + col1).unwrap() *
-                        rhs.data.get(row2 * rhs.columns + col2).unwrap();
+                    sum += self.data.get(rows1 * self.columns + col1).unwrap()
+                        * rhs.data.get(row2 * rhs.columns + col2).unwrap();
                 }
                 result.data.push(sum);
             }
@@ -132,4 +133,3 @@ impl ops::Mul<Self> for Matrix2D {
         result
     }
 }
-

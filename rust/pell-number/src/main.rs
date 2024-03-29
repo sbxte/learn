@@ -4,9 +4,7 @@ static mut PELL_VALUES: Lazy<Vec<u128>> = Lazy::new(|| vec![0, 1]);
 
 fn pell_mut_static(n: u32) -> u128 {
     unsafe { PELL_VALUES.get(n as usize) }
-        // unsafe { PELL_VALUES }
-        //     .get(n as usize)
-        .map(|v| *v)
+        .copied()
         .unwrap_or_else(|| {
             let val: u128 = 2 * pell_mut_static(n - 1) + pell_mut_static(n - 2);
             unsafe { PELL_VALUES.push(val) }
@@ -31,7 +29,7 @@ impl PellGenerator {
     }
 
     fn get(&mut self, n: u32) -> u128 {
-        self.values.get(n as usize).map(|v| *v).unwrap_or_else(|| {
+        self.values.get(n as usize).copied().unwrap_or_else(|| {
             let val = self.get(n - 2) + 2 * self.get(n - 1);
             self.values.push(val);
             val

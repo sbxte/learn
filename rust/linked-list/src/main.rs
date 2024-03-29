@@ -55,9 +55,7 @@ mod linkedlist {
         type Item = T;
 
         fn next(&mut self) -> Option<Self::Item> {
-            if let None = self.curr {
-                return None;
-            }
+            self.curr.as_ref()?;
 
             let current_value = self.curr.clone().unwrap().0.borrow().value.to_owned();
             if let Some(ref next) = self.curr.clone().unwrap().0.borrow().next {

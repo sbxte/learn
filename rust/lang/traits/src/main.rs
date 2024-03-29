@@ -57,9 +57,9 @@ fn main() {
 
     println!("Dynamic dispatch with arrays");
     let audibles: Vec<Box<dyn Sound>> = vec![
-        Box::new(Cat::default()),
-        Box::new(Dog::default()),
-        Box::new(Cat::default()),
+        Box::new(Cat),
+        Box::new(Dog),
+        Box::new(Cat),
     ];
     for audible in audibles {
         (*audible).play();
