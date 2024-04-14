@@ -1,0 +1,8 @@
+[package]
+name = "home_dir"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.82"
+home = "0.5.9"
