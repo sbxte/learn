@@ -65,6 +65,21 @@ impl<T> MyVec<T> {
     }
 }
 
+impl<T> Drop for MyVec<T> {
+    fn drop(&mut self) {
+        if self.cap == 0 {
+            return;
+        }
+
+        unsafe {
+            alloc::dealloc(
+                self.ptr.as_ptr() as *mut u8,
+                Layout::array::<T>(self.cap).unwrap(),
+            )
+        }
+    }
+}
+
 impl<T> std::fmt::Debug for MyVec<T>
 where
     T: std::fmt::Debug,
@@ -102,6 +117,8 @@ macro_rules! myvec {
 fn main() {
     let mut x = myvec![];
     dbg!(&x);
+
+    // Test for pushes
     for i in 0..10 {
         x.push(i);
     }
