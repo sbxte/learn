@@ -1,5 +1,5 @@
 [workspace]
-members = [ "hello-world", "math", "pell-number", "protobuf-parsing", "lang/lifetime/forums", "lang/modules", "lang/std/borrow_cow", "lang/tests", "lang/traits", "lang/unsafe/mutable-static", "lang/unsafe/raw-pointers" , "lang/macros", "linked-list", "home-dir", "idk/rick", "lang/std/io/stdin", "idk/3", "lang/comments", "reimpl_vec"]
+members = [ "hello-world", "math", "pell-number", "protobuf-parsing", "lang/lifetime/forums", "lang/modules", "lang/std/borrow_cow", "lang/tests", "lang/traits", "lang/unsafe/mutable-static", "lang/unsafe/raw-pointers" , "lang/macros", "linked-list", "home-dir", "idk/rick", "lang/std/io/stdin", "idk/3", "lang/comments", "reimpl_vec", "project-euler/p13-large-sum"]
 resolver = "2"
 
 [profile.release]
