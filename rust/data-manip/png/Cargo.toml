@@ -1,0 +1,14 @@
+[package]
+name = "png"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[lib]
+name = "png"
+path = "src/lib.rs"
+
+[[bin]]
+name = "png_run"
+path = "src/main.rs"
