@@ -16,11 +16,13 @@ fn main() {
 
     let png = Png::new(&bytes);
 
-    dbg!(&png.pixels.len(), &png.bit_depth, &png.color_type);
-
-    let mut sum: u128 = 0;
-    for i in &png.pixels {
-        sum += i.a as u128;
-    }
-    dbg!(sum as f32 / png.pixels.len() as f32);
+    dbg!(
+        &png.pixels.len(),
+        &png.bit_depth,
+        &png.color_type,
+        &png.bg_color,
+        &png.chromaticities,
+        &png.phys_dim,
+        &png.texts
+    );
 }

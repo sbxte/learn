@@ -19,6 +19,10 @@ impl ColorType {
             alpha,
         }
     }
+
+    pub fn to_byte(&self) -> u8 {
+        self.palette as u8 | (self.color as u8) << 2 | (self.alpha as u8) << 3
+    }
 }
 
 impl Default for ColorType {
@@ -33,11 +37,71 @@ impl Default for ColorType {
 }
 
 #[derive(Debug, Default, PartialEq, Eq)]
-pub struct Pixel {
+pub struct Color {
     pub r: u16,
     pub g: u16,
     pub b: u16,
     pub a: u16,
+}
+
+impl Color {
+    pub fn rgb(r: u16, g: u16, b: u16, bit_depth: u8) -> Self {
+        Self {
+            r,
+            g,
+            b,
+            a: 1 << (bit_depth as u16),
+        }
+    }
+
+    pub fn grayscale(value: u16, bit_depth: u8) -> Self {
+        Self {
+            r: value,
+            g: value,
+            b: value,
+            a: 1 << (bit_depth as u16),
+        }
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct Chromaticity {
+    wpx: u32,
+    wpy: u32,
+    rx: u32,
+    ry: u32,
+    gx: u32,
+    gy: u32,
+    bx: u32,
+    by: u32,
+}
+
+impl Chromaticity {
+    pub fn new(wpx: u32, wpy: u32, rx: u32, ry: u32, gx: u32, gy: u32, bx: u32, by: u32) -> Self {
+        Self {
+            wpx,
+            wpy,
+            rx,
+            ry,
+            gx,
+            gy,
+            bx,
+            by,
+        }
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct PhysDim {
+    x: u32,
+    y: u32,
+    u: u8,
+}
+
+impl PhysDim {
+    pub fn new(x: u32, y: u32, u: u8) -> Self {
+        Self { x, y, u }
+    }
 }
 
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -50,7 +114,12 @@ pub struct Png {
     pub filter_method: u8,
     pub interlace_method: u8,
     pub palette: Vec<u8>,
-    pub pixels: Vec<Pixel>,
+    pub pixels: Vec<Color>,
+
+    pub bg_color: Option<Color>,
+    pub chromaticities: Option<Chromaticity>,
+    pub phys_dim: Option<PhysDim>,
+    pub texts: Vec<String>,
 }
 
 impl Png {
@@ -113,14 +182,14 @@ impl Png {
                     if bptr + 3 >= bytes.len() {
                         dbg!(&bytes[bptr - 4..]);
                     }
-                    Pixel {
+                    Color {
                         r: bytes[bptr] as u16,
                         g: bytes[bptr + 1] as u16,
                         b: bytes[bptr + 2] as u16,
                         a: bytes[bptr + 3] as u16,
                     }
                 } else {
-                    Pixel {
+                    Color {
                         r: unsafe {
                             std::mem::transmute::<[u8; 2], u16>(
                                 bytes[bptr..bptr + 2].try_into().unwrap(),
@@ -166,10 +235,16 @@ impl PngChunk {
         pixel_data: &mut Vec<u8>,
     ) -> bool {
         match ctype {
-            ['I', 'H', 'D', 'R'] => Self::parse_chunk_ihdr(bytes, construct),
-            ['P', 'L', 'T', 'E'] => Self::parse_chunk_plte(bytes, construct),
-            ['I', 'D', 'A', 'T'] => Self::parse_chunk_idat(bytes, construct, pixel_data),
+            ['I', 'H', 'D', 'R'] => Self::parse_ihdr(bytes, construct),
+            ['P', 'L', 'T', 'E'] => Self::parse_plte(bytes, construct),
+            ['I', 'D', 'A', 'T'] => Self::parse_idat(bytes, construct, pixel_data),
             ['I', 'E', 'N', 'D'] => return true,
+            ['b', 'K', 'G', 'D'] => Self::parse_bkgd(bytes, construct),
+            ['c', 'H', 'R', 'M'] => Self::parse_chrm(bytes, construct),
+            ['p', 'H', 'Y', 's'] => Self::parse_phys(bytes, construct),
+            ['t', 'E', 'X', 't'] | ['i', 'T', 'X', 't'] | ['z', 'T', 'X', 't'] => {
+                Self::parse_text(bytes, construct)
+            }
             _ => {
                 dbg!(&ctype);
             }
@@ -177,7 +252,7 @@ impl PngChunk {
         false
     }
 
-    fn parse_chunk_ihdr(bytes: &[u8], construct: &mut Png) {
+    fn parse_ihdr(bytes: &[u8], construct: &mut Png) {
         construct.width =
             unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[0..4].try_into().unwrap()) }.to_be();
         construct.height =
@@ -189,15 +264,70 @@ impl PngChunk {
         construct.interlace_method = bytes[12];
     }
 
-    fn parse_chunk_plte(bytes: &[u8], construct: &mut Png) {
+    fn parse_plte(bytes: &[u8], construct: &mut Png) {
         construct.palette.copy_from_slice(bytes);
     }
 
-    fn parse_chunk_idat(bytes: &[u8], construct: &mut Png, pixel_data: &mut Vec<u8>) {
+    fn parse_idat(bytes: &[u8], construct: &mut Png, pixel_data: &mut Vec<u8>) {
         // TODO: Implement filters and compression
 
         let bptr = if construct.filter_method == 0 { 1 } else { 0 };
 
         pixel_data.extend(&bytes[bptr..]);
+    }
+
+    fn parse_bkgd(bytes: &[u8], construct: &mut Png) {
+        construct.bg_color = match construct.color_type.to_byte() {
+            0 | 4 => Some(Color::grayscale(
+                unsafe { std::mem::transmute::<[u8; 2], u16>(bytes[0..2].try_into().unwrap()) }
+                    .to_be(),
+                construct.bit_depth,
+            )),
+            2 | 6 => Some(Color::rgb(
+                unsafe { std::mem::transmute::<[u8; 2], u16>(bytes[0..2].try_into().unwrap()) }
+                    .to_be(),
+                unsafe { std::mem::transmute::<[u8; 2], u16>(bytes[2..4].try_into().unwrap()) }
+                    .to_be(),
+                unsafe { std::mem::transmute::<[u8; 2], u16>(bytes[4..6].try_into().unwrap()) }
+                    .to_be(),
+                construct.bit_depth,
+            )),
+            _ => None,
+        }
+    }
+
+    fn parse_chrm(bytes: &[u8], construct: &mut Png) {
+        construct.chromaticities = Some(Chromaticity::new(
+            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[0..4].try_into().unwrap()) }.to_be(),
+            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[4..8].try_into().unwrap()) }.to_be(),
+            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[8..12].try_into().unwrap()) }
+                .to_be(),
+            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[12..16].try_into().unwrap()) }
+                .to_be(),
+            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[16..20].try_into().unwrap()) }
+                .to_be(),
+            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[20..24].try_into().unwrap()) }
+                .to_be(),
+            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[24..28].try_into().unwrap()) }
+                .to_be(),
+            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[28..32].try_into().unwrap()) }
+                .to_be(),
+        ))
+    }
+
+    fn parse_phys(bytes: &[u8], construct: &mut Png) {
+        construct.phys_dim = Some(PhysDim::new(
+            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[0..4].try_into().unwrap()) }.to_be(),
+            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[4..8].try_into().unwrap()) }.to_be(),
+            bytes[8],
+        ))
+    }
+
+    fn parse_text(bytes: &[u8], construct: &mut Png) {
+        let mut v = Vec::with_capacity(bytes.len());
+        for b in bytes {
+            v.push(*b);
+        }
+        construct.texts.push(String::from_utf8(v).unwrap())
     }
 }
