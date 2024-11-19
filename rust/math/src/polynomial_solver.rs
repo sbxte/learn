@@ -72,28 +72,32 @@ pub fn solve_quadratic(a: f64, b: f64, c: f64) -> Result<(Complex, Complex), Err
 //     }
 // }
 
-pub fn run_examples() {
-    // Linear
-    println!(
-        "Solution of 4x + 1 = 0 is {}!",
-        solve_linear(Complex::new(4.0, 0.0), Complex::new(1.0, 0.0)).unwrap()
-    );
-    println!(
-        "Solution of 5x - 10 = 0 is {}!",
-        solve_linear(Complex::new(5.0, 0.0), Complex::new(-10.0, 0.0)).unwrap()
-    );
-    match solve_linear(Complex::new(0.0, 0.0), Complex::new(3.0, 0.0)) {
-        Ok(s) => println!("Solution of 0x - 3 = 0 is {}!", s),
-        Err(e) => println!("Solution of 0x - 3 = 0 is {:?}!", e),
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn linear_sol() {
+        let a = Complex::new(1f64, 0f64);
+        let b = Complex::new(2f64, 0f64);
+        assert_eq!(solve_linear(a, b), Ok(Complex::new(-2f64, 0f64)),);
     }
 
-    // Quadratic
-    println!(
-        "Solution of x^2 - 2x -3 = 0 is {:?}!",
-        solve_quadratic(1.0, -2.0, -3.0).unwrap()
-    );
-    println!(
-        "Solution of x^2 - 4x + 3 = 0 is {:?}!",
-        solve_quadratic(1.0, -4.0, 3.0).unwrap()
-    );
+    #[test]
+    fn linear_nosol() {
+        let a = Complex::new(0f64, 0f64);
+        let b = Complex::new(1f64, 0f64);
+        assert_eq!(solve_linear(a, b), Err(ErrorType::NoSolutions));
+    }
+
+    #[test]
+    fn quad_sol() {
+        let a = 1.0;
+        let b = -4.0;
+        let c = 3.0;
+        let s1 = Complex::new(3.0, 0.0);
+        let s2 = Complex::new(1.0, 0.0);
+        let r = solve_quadratic(a, b, c);
+        assert!(r == Ok((s1, s2)) || r == Ok((s2, s1)));
+    }
 }
