@@ -25,40 +25,50 @@ where
     }
 }
 
-// Norms and Reciprocals
+// Norm
 // Requires sqrt functions and those are not trait functions
 // so their explicit methods must be used
-macro_rules! impl_norm_recip {
-    ($t:ident, $method:ident) => {
-        impl Quaternion<$t> {
-            /// I would personally also call this magnitude
-            #[inline]
-            pub fn norm(self) -> $t {
-                $t::$method(self.a * self.a + self.b * self.b + self.c * self.c + self.d * self.d)
+macro_rules! impl_norm {
+    ( $method:ident, $($t:ident)+) => {
+        $(
+            impl Quaternion<$t> {
+                /// Returns the norm
+                /// I would personally also call this magnitude
+                #[inline]
+                pub fn norm(self) -> $t {
+                    $t::$method(self.a * self.a + self.b * self.b + self.c * self.c + self.d * self.d)
+                }
             }
-
-            /// Returns the square of the norm
-            /// Also see `norm`
-            #[inline]
-            pub fn norm2(self) -> $t {
-                self.a * self.a + self.b * self.b + self.c * self.c + self.d * self.d
-            }
-
-            /// Returns the reciprocal
-            #[inline]
-            pub fn recip(self) -> Self {
-                self.conjugate() / self.norm2()
-            }
-        }
+        )+
     };
 }
 
-impl_norm_recip!(f32, sqrt);
-impl_norm_recip!(f64, sqrt);
-impl_norm_recip!(i16, isqrt);
-impl_norm_recip!(i32, isqrt);
-impl_norm_recip!(i64, isqrt);
-impl_norm_recip!(i128, isqrt);
+impl_norm!(sqrt, f32 f64);
+impl_norm!(isqrt, i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 isize usize);
+
+// Norm2 and reciprocals do not require sqrt functions
+impl<T> Quaternion<T>
+where
+    T: Mul<Output = T> + Add<Output = T> + Copy,
+{
+    /// Returns the square of the norm
+    /// Also see `norm`
+    #[inline]
+    pub fn norm2(self) -> T {
+        self.a * self.a + self.b * self.b + self.c * self.c + self.d * self.d
+    }
+}
+
+impl<T> Quaternion<T>
+where
+    T: Mul<Output = T> + Add<Output = T> + Neg<Output = T> + Div<Output = T> + Copy,
+{
+    /// Returns the reciprocal
+    #[inline]
+    pub fn recip(self) -> Self {
+        self.conjugate() / self.norm2()
+    }
+}
 
 // Negation, Addition, Subtraction, Multiplication, Division
 
