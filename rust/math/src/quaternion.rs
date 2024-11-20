@@ -240,6 +240,48 @@ macro_rules! impl_default {
 
 impl_default!(i8 i16 i32 i64 i128 f32 f64);
 
+// All because negative trait bounds are not allowed... bruh
+//
+// impl<T, F> From<Quaternion<F>> for Quaternion<T>
+// where
+//     T: From<F> + !From<T>,
+// {
+//     fn from(value: Quaternion<F>) -> Self {
+//         Self::new(
+//             From::from(value.a),
+//             From::from(value.b),
+//             From::from(value.c),
+//             From::from(value.d),
+//         )
+//     }
+// }
+
+macro_rules! impl_from {
+    ($t:ty, $($f:ty)+) => {
+        $(
+            impl From<Quaternion<$f>> for Quaternion<$t> {
+                fn from(value: Quaternion<$f>) -> Quaternion<$t> {
+                    Self::new(
+                        From::from(value.a),
+                        From::from(value.b),
+                        From::from(value.c),
+                        From::from(value.d)
+                    )
+                }
+            }
+        )+
+    }
+}
+
+impl_from!(f64, f32 u32 u16 u8);
+impl_from!(f32, u16 u8);
+impl_from!(u64, u32 u16 u8);
+impl_from!(u32, u16 u8);
+impl_from!(u16, u8);
+impl_from!(i64, i32 i16 i8);
+impl_from!(i32, i16 i8);
+impl_from!(i16, i8);
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -262,5 +304,17 @@ mod tests {
         }
 
         test_default!(i8 i16 i32 i64 f32 f64);
+    }
+
+    #[test]
+    fn interior_numeric_conversion() {
+        assert_eq!(
+            <Quaternion<f64> as From<_>>::from(Quaternion::<f32>::new(0.0, 0.0, 0.0, 0.0)),
+            Quaternion::<f64>::new(0.0, 0.0, 0.0, 0.0)
+        );
+        assert_eq!(
+            <Quaternion<i64> as From<_>>::from(Quaternion::<i32>::new(0, 0, 0, 0)),
+            Quaternion::<i64>::new(0, 0, 0, 0)
+        );
     }
 }
