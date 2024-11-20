@@ -78,6 +78,26 @@ where
     }
 }
 
+// Unit quaternion rotation
+macro_rules! impl_rot {
+    ($sincos:ident, $($t:ident)+) => {
+        $(
+            impl Quaternion<$t> {
+                /// Returns the unit quaternion required to conjugate (rotate) a quaternion by some
+                /// half angle
+                #[inline]
+                pub fn rot_conj(self, half_angle: $t) -> Self {
+                    assert_eq!(self.a, <$t as Default>::default());
+                    let (s,c) = $t::$sincos(half_angle);
+                    Self::new(c, <$t>::default(), <$t>::default(), <$t>::default()) + self * s
+                }
+            }
+        )+
+    }
+}
+
+impl_rot!(sin_cos, f32 f64);
+
 // Negation, Addition, Subtraction, Multiplication, Division
 
 impl<T> Neg for Quaternion<T>
