@@ -38,12 +38,20 @@ macro_rules! impl_norm {
                 pub fn norm(self) -> $t {
                     $t::$method(self.a * self.a + self.b * self.b + self.c * self.c + self.d * self.d)
                 }
+
+                /// Returns the normalized
+                /// Norm of 1
+                #[inline]
+                pub fn normalize(self) -> Self {
+                    self / self.norm()
+                }
             }
         )+
     };
 }
 
 impl_norm!(sqrt, f32 f64);
+// Integer quaternions are so cursed I advice never using it
 impl_norm!(isqrt, i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 isize usize);
 
 // Norm2 and reciprocals do not require sqrt functions
