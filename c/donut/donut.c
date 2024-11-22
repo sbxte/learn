@@ -1,6 +1,8 @@
+#include <stdio.h>
+#include <string.h>
 int k;
 double sin(), cos();
-main() {
+int main() {
   float A = 0, B = 0, i, j, z[1760];
   char b[1760];
   printf("\x1b[2J");
