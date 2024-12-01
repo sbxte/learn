@@ -1,3 +1,6 @@
-# Learn In Public
+# SByte's autodidact sandbox
 
-Probably bad code inside.
+<div align="center">
+	<img src="./badcodeinside.jpg" height="256px">
+	<img src="./ihavenoideawhatimdoing.jpg" height="256px">
+</div>
