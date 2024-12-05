@@ -25,31 +25,27 @@ $ ls
 7214296 k";
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct Node<'a> {
-    dirs: Vec<&'a str>,
+pub struct Dir {
     size: u32,
 }
 
-impl Node<'_> {
+impl Dir {
     pub fn new() -> Self {
-        Self {
-            dirs: vec![],
-            size: 0,
-        }
+        Self { size: 0 }
     }
 }
 
-fn recurse_dirs<'a>(
-    lines: &[&'a str],
+fn recurse_dirs(
+    lines: &[&str],
     mut line_idx: usize,
-    tree: &mut HashMap<String, Node<'a>>,
+    tree: &mut HashMap<String, Dir>,
     curr_dir: PathBuf,
 ) -> (u32, usize) {
     if line_idx >= lines.len() {
         return (0, line_idx);
     }
     let curr_dir_str = curr_dir.to_str().unwrap().to_string();
-    tree.insert(curr_dir_str.clone(), Node::new());
+    tree.insert(curr_dir_str.clone(), Dir::new());
 
     let mut sum = 0;
 
@@ -67,16 +63,12 @@ fn recurse_dirs<'a>(
                 if l.starts_with("dir") {
                     let dir = &l[4..];
                     if !tree.contains_key(&curr_dir_str) {
-                        let mut node = Node::new();
-                        node.dirs.push(dir);
-                        tree.insert(curr_dir_str.clone(), node);
-                    } else {
-                        tree.get_mut(&curr_dir_str).unwrap().dirs.push(dir);
+                        tree.insert(curr_dir_str.clone(), Dir::new());
                     }
                     if !tree.contains_key(dir) {
                         let mut d = curr_dir.clone();
                         d.push(dir);
-                        tree.insert(d.to_str().unwrap().to_string(), Node::new());
+                        tree.insert(d.to_str().unwrap().to_string(), Dir::new());
                     }
                 } else {
                     let size = l.split_once(' ').unwrap().0.parse::<u32>().unwrap();
