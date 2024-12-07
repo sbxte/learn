@@ -1,3 +1,6 @@
 [submodule "git"]
 	path = git
 	url = git@github.com:SaltPapers/test
+[submodule "rust/aoc"]
+	path = rust/aoc
+	url = ssh://git@github.com/sbxte/aoc-rs
