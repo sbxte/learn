@@ -1,0 +1,14 @@
+[package]
+name = "ppm"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+[lib]
+name = "ppm"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ppm_run"
+path = "src/main.rs"
