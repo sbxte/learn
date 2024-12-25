@@ -1,3 +1,23 @@
+macro_rules! cast_2u8_u16 {
+    ($x:expr) => {
+        unsafe { std::ptr::read_unaligned($x as *const [u8] as *const u16) }.to_be()
+    };
+}
+
+macro_rules! cast_4u8_u32 {
+    ($x:expr) => {
+        unsafe { std::ptr::read_unaligned($x as *const [u8] as *const u32) }.to_be()
+    };
+}
+
+macro_rules! cast_tuple_4u8_u32 {
+    ($($x:expr $(,)?)+) => {
+        ($(
+        cast_4u8_u32!($x)
+        ,)+)
+    };
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct ColorType {
     pub grayscale: bool,
@@ -77,16 +97,16 @@ pub struct Chromaticity {
 }
 
 impl Chromaticity {
-    pub fn new(wpx: u32, wpy: u32, rx: u32, ry: u32, gx: u32, gy: u32, bx: u32, by: u32) -> Self {
+    pub fn new(wp: (u32, u32), r: (u32, u32), g: (u32, u32), b: (u32, u32)) -> Self {
         Self {
-            wpx,
-            wpy,
-            rx,
-            ry,
-            gx,
-            gy,
-            bx,
-            by,
+            wpx: wp.0,
+            wpy: wp.1,
+            rx: r.0,
+            ry: r.1,
+            gx: g.0,
+            gy: g.1,
+            bx: b.0,
+            by: b.1,
         }
     }
 }
@@ -139,10 +159,7 @@ impl Png {
         let mut pixel_data = vec![];
         while i < bytes.len() {
             // Chunk headers
-            let clength: u32 = unsafe {
-                std::mem::transmute::<[u8; 4], u32>(bytes[i..i + 4].try_into().unwrap()).to_be()
-            };
-
+            let clength: u32 = cast_4u8_u32!(&bytes[i..i + 4]);
             let ctype: [u8; 4] = bytes[i + 4..i + 8].try_into().unwrap();
             let ctype = ctype.map(|f| f as char);
 
@@ -190,26 +207,10 @@ impl Png {
                     }
                 } else {
                     Color {
-                        r: unsafe {
-                            std::mem::transmute::<[u8; 2], u16>(
-                                bytes[bptr..bptr + 2].try_into().unwrap(),
-                            )
-                        },
-                        g: unsafe {
-                            std::mem::transmute::<[u8; 2], u16>(
-                                bytes[bptr + 2..bptr + 4].try_into().unwrap(),
-                            )
-                        },
-                        b: unsafe {
-                            std::mem::transmute::<[u8; 2], u16>(
-                                bytes[bptr + 4..bptr + 6].try_into().unwrap(),
-                            )
-                        },
-                        a: unsafe {
-                            std::mem::transmute::<[u8; 2], u16>(
-                                bytes[bptr + 6..bptr + 8].try_into().unwrap(),
-                            )
-                        },
+                        r: cast_2u8_u16!(&bytes[bptr..bptr + 2]),
+                        g: cast_2u8_u16!(&bytes[bptr + 2..bptr + 4]),
+                        b: cast_2u8_u16!(&bytes[bptr + 4..bptr + 6]),
+                        a: cast_2u8_u16!(&bytes[bptr + 6..bptr + 8]),
                     }
                 }
             } else {
@@ -253,10 +254,8 @@ impl PngChunk {
     }
 
     fn parse_ihdr(bytes: &[u8], construct: &mut Png) {
-        construct.width =
-            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[0..4].try_into().unwrap()) }.to_be();
-        construct.height =
-            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[4..8].try_into().unwrap()) }.to_be();
+        construct.width = cast_4u8_u32!(&bytes[0..4]);
+        construct.height = cast_4u8_u32!(&bytes[4..8]);
         construct.bit_depth = bytes[8];
         construct.color_type = ColorType::from_byte(bytes[9]);
         construct.compression_method = bytes[10];
@@ -279,17 +278,13 @@ impl PngChunk {
     fn parse_bkgd(bytes: &[u8], construct: &mut Png) {
         construct.bg_color = match construct.color_type.to_byte() {
             0 | 4 => Some(Color::grayscale(
-                unsafe { std::mem::transmute::<[u8; 2], u16>(bytes[0..2].try_into().unwrap()) }
-                    .to_be(),
+                cast_2u8_u16!(&bytes[0..2]),
                 construct.bit_depth,
             )),
             2 | 6 => Some(Color::rgb(
-                unsafe { std::mem::transmute::<[u8; 2], u16>(bytes[0..2].try_into().unwrap()) }
-                    .to_be(),
-                unsafe { std::mem::transmute::<[u8; 2], u16>(bytes[2..4].try_into().unwrap()) }
-                    .to_be(),
-                unsafe { std::mem::transmute::<[u8; 2], u16>(bytes[4..6].try_into().unwrap()) }
-                    .to_be(),
+                cast_2u8_u16!(&bytes[0..2]),
+                cast_2u8_u16!(&bytes[2..4]),
+                cast_2u8_u16!(&bytes[4..6]),
                 construct.bit_depth,
             )),
             _ => None,
@@ -298,27 +293,17 @@ impl PngChunk {
 
     fn parse_chrm(bytes: &[u8], construct: &mut Png) {
         construct.chromaticities = Some(Chromaticity::new(
-            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[0..4].try_into().unwrap()) }.to_be(),
-            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[4..8].try_into().unwrap()) }.to_be(),
-            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[8..12].try_into().unwrap()) }
-                .to_be(),
-            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[12..16].try_into().unwrap()) }
-                .to_be(),
-            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[16..20].try_into().unwrap()) }
-                .to_be(),
-            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[20..24].try_into().unwrap()) }
-                .to_be(),
-            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[24..28].try_into().unwrap()) }
-                .to_be(),
-            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[28..32].try_into().unwrap()) }
-                .to_be(),
+            cast_tuple_4u8_u32!(&bytes[0..4], &bytes[4..8]),
+            cast_tuple_4u8_u32!(&bytes[8..12], &bytes[12..16]),
+            cast_tuple_4u8_u32!(&bytes[16..20], &bytes[20..24]),
+            cast_tuple_4u8_u32!(&bytes[24..28], &bytes[28..32]),
         ))
     }
 
     fn parse_phys(bytes: &[u8], construct: &mut Png) {
         construct.phys_dim = Some(PhysDim::new(
-            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[0..4].try_into().unwrap()) }.to_be(),
-            unsafe { std::mem::transmute::<[u8; 4], u32>(bytes[4..8].try_into().unwrap()) }.to_be(),
+            cast_4u8_u32!(&bytes[0..4]),
+            cast_4u8_u32!(&bytes[4..8]),
             bytes[8],
         ))
     }
