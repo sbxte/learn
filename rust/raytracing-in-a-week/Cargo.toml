@@ -1,0 +1,4 @@
+[package]
+name = "raytracing-in-a-week"
+version = "0.1.0"
+edition = "2024"
