@@ -4,6 +4,9 @@ pub mod casts;
 /// Png parsing module
 pub mod parse;
 
+/// Png writing module
+pub mod write;
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct ColorType {
     pub grayscale: bool,
