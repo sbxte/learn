@@ -6,3 +6,5 @@ edition = "2021"
 [dependencies]
 procmacro = { path = "./procmacro/" }
 procmacro_derive = { path = "./procmacro_derive/" }
+serde = "1.0.228"
+serde_derive = "1.0.228"
